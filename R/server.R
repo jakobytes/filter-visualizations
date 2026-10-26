@@ -50,6 +50,13 @@ get_params <- function(params, input) {
     sapply(params, function(x) x$name))
 }
 
+# TRUE if every parameter has a value (checkboxes count as set either way):
+# don't run queries with e.g. no collections selected or an empty text field
+params_complete <- function(values) {
+  all(sapply(values, function(x) is.logical(x) ||
+                                 (length(x) > 0 && any(nchar(as.character(x)) > 0))))
+}
+
 server <- function(input, output, session) {
   # initialization: load config and necessary data from the DB
   config <- read_yaml('config.yaml')
@@ -65,19 +72,22 @@ server <- function(input, output, session) {
     v <- config$visualizations[[input$vis]]
     req(v$query)
     params <- get_params(v$params, input)
+    req(params_complete(params))
     if (v$source == 'sql') {
       # parameter values may be double-quoted (e.g. type IDs in links from
       # runoregi): DuckDB needs single quotes for string literals
       params <- lapply(params, function(x) if (is.character(x)) gsub('"', "'", x) else x)
     }
     whisker.render(v$query, params)
-  }) %>%
-    bindEvent(input$refresh, ignoreNULL=T)
+  })
 
+  # The data is updated automatically when a parameter changes; debounced so
+  # that typing or ticking several boxes runs one query, not one per change.
   get_data <- reactive({
     req(input$vis)
     t1 <- Sys.time()
     v <- config$visualizations[[input$vis]]
+    req(params_complete(get_params(v$params, input)))
     url <- make_url(input, v$params, v$type, config$visualization_types[[v$type]]$params)
     if (v$source %in% c('csv', 'json')) {
       if ('url' %in% names(v)) {
@@ -111,7 +121,7 @@ server <- function(input, output, session) {
     }
     data
   }) %>%
-    bindEvent(input$refresh, ignoreNULL=T)
+    debounce(800)
 
   # output visualizations
   tmap <- reactive(make_map(get_data(), input, maps, place.poly))
@@ -126,7 +136,7 @@ server <- function(input, output, session) {
       'timeline' = plot_timeline(get_data(), input$timeline__min,
                                  input$timeline__max, input$timeline__by)
     )
-  }) %>% bindEvent(input$refresh, ignoreNULL=T)
+  })
   output$wordcloud <- renderWordcloud2(make_wordcloud(get_data(), input))
 
   output$dt <- DT::renderDataTable(get_data())
@@ -135,8 +145,7 @@ server <- function(input, output, session) {
     v <- config$visualizations[[input$vis]]
     url <- make_url(input, v$params, v$type, config$visualization_types[[v$type]]$params)
     tags$a(href=url, 'permalink')
-  }) %>%
-    bindEvent(input$refresh, ignoreNULL=T)
+  })
 
   # download handlers
   dl_filename <- reactive({
@@ -205,14 +214,6 @@ server <- function(input, output, session) {
                                                    chq[[p$choices_query]]$label)))
         }
       }
-    }
-  })
-
-  # If non-interactive -> simulate a click on the refresh button
-  # to trigger the data loading.
-  observe({
-    if (!input$interactive) {
-      click('refresh')
     }
   })
 }
