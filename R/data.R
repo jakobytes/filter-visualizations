@@ -1,39 +1,56 @@
 library(RCurl)
-library(RMariaDB)
+library(duckdb)
 
+# Location of the parquet files: an HTTP(S) URL or a local directory.
+# Each table is read from <PARQUET_BASE>/<table>.parquet
+PARQUET_BASE <- Sys.getenv('PARQUET_BASE', 'https://a3s.fi/filter-data/')
+
+.db <- new.env()
+
+# One DuckDB connection per R process, with a view for every parquet file.
 connect_to_db <- function() {
-  con <- dbConnect(MariaDB(),
-                   host=Sys.getenv('DB_HOST'),
-                   port=as.integer(Sys.getenv('DB_PORT')),
-                   username=Sys.getenv('DB_USER'),
-                   password=Sys.getenv('DB_PASS'),
-                   dbname=Sys.getenv('DB_NAME'),
-                   bigint='integer64')
-  dbExecute(con, 'SET NAMES utf8;')
-  con
+  if (is.null(.db$con)) {
+    # BIGINT/HUGEINT results (e.g. COUNT, SUM) as ordinary R numbers
+    con <- dbConnect(duckdb::duckdb(), bigint='numeric')
+    if (nchar(Sys.getenv('DUCKDB_EXTENSION_DIRECTORY')) > 0)
+      dbExecute(con, sprintf("SET extension_directory = '%s'", Sys.getenv('DUCKDB_EXTENSION_DIRECTORY')))
+    if (nchar(Sys.getenv('DUCKDB_MEMORY_LIMIT')) > 0)
+      dbExecute(con, sprintf("SET memory_limit = '%s'", Sys.getenv('DUCKDB_MEMORY_LIMIT')))
+    if (nchar(Sys.getenv('DUCKDB_THREADS')) > 0)
+      dbExecute(con, sprintf('SET threads = %d', as.integer(Sys.getenv('DUCKDB_THREADS'))))
+    base <- sub('/+$', '', PARQUET_BASE)
+    if (grepl('^https?://', base)) {
+      dbExecute(con, 'INSTALL httpfs; LOAD httpfs;')
+      tables <- c('collectors', 'map_pol', 'maps', 'p_clust', 'p_col', 'p_pl',
+                  'p_sim', 'p_typ', 'p_year', 'place_stats', 'places', 'pol_pl',
+                  'polygons', 'poems', 'raw_meta', 'types', 'v_clust',
+                  'v_clusterings', 'verse_poem', 'word_occ', 'words')
+    } else {
+      tables <- sub('\\.parquet$', '', list.files(base, pattern='\\.parquet$'))
+    }
+    for (tbl in tables) {
+      dbExecute(con, sprintf("CREATE VIEW %s AS SELECT * FROM read_parquet('%s/%s.parquet')",
+                             tbl, base, tbl))
+    }
+    .db$con <- con
+  }
+  .db$con
+}
+
+# MySQL's `x REGEXP 'y'` operator has no DuckDB equivalent: use regexp_matches()
+to_duckdb_sql <- function(q) {
+  gsub("(\\S+)\\s+REGEXP\\s+('(?:[^']|'')*')", "regexp_matches(\\1, \\2)", q, perl=TRUE)
 }
 
 query_db <- function(con, q) {
-  res <- dbSendQuery(con, q)
-  data <- dbFetch(res)
-  dbClearResult(res)
-  data
+  dbGetQuery(con, to_duckdb_sql(q))
 }
 
 connect_and_query_db <- function(q) {
-  con <- connect_to_db()
-  result <- query_db(con, q)
-  dbDisconnect(con)
-  result
+  query_db(connect_to_db(), q)
 }
 
+# Logging writes to the database; not available with parquet.
 write_log_to_db <- function(url, rtime, user_agent) {
-  con <- connect_to_db()
-  if (nchar(url) > 2000) {
-    url <- paste0(substr(url, 1, 1997), '...')
-  }
-  dbAppendTable(con, 'visualizations_log',
-                data.frame(url=url, rtime=as.double(rtime), user_agent=user_agent))
-  dbDisconnect(con)
+  invisible(NULL)
 }
-

@@ -29,7 +29,7 @@ read_types <- function(con) {
     '  LEFT JOIN types t2 ON t1.par_id = t2.t_id',
     '  LEFT JOIN types t3 ON t2.par_id = t3.t_id',
     '  LEFT JOIN types t4 ON t3.par_id = t4.t_id',
-    'WHERE t1.type_orig_id NOT LIKE "kt_%"',
+    "WHERE t1.type_orig_id NOT LIKE 'kt_%'",
     ';'
   ))
   types <- types %>%

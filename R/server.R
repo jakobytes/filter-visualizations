@@ -59,13 +59,18 @@ server <- function(input, output, session) {
   types <- read_types(con)
   place.poly <- read_place.poly(con)
   chq <- lapply(config$choices_queries, function(q) query_db(con, q))
-  dbDisconnect(con)
   
   # data
   make_query <- reactive({
     v <- config$visualizations[[input$vis]]
     req(v$query)
-    whisker.render(v$query, get_params(v$params, input))
+    params <- get_params(v$params, input)
+    if (v$source == 'sql') {
+      # parameter values may be double-quoted (e.g. type IDs in links from
+      # runoregi): DuckDB needs single quotes for string literals
+      params <- lapply(params, function(x) if (is.character(x)) gsub('"', "'", x) else x)
+    }
+    whisker.render(v$query, params)
   }) %>%
     bindEvent(input$refresh, ignoreNULL=T)
 

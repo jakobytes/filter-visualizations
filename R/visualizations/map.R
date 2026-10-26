@@ -1,15 +1,22 @@
+# The geometry blobs are in MySQL's internal format: a 4-byte SRID followed
+# by the geometry as WKB.
+parse_geometry <- function(blobs) {
+  st_as_sfc(structure(lapply(blobs, function(b) b[-(1:4)]), class='WKB'))
+}
+
 read_maps <- function(con) {
   maps <- query_db(con, "SELECT map_id, name FROM maps;")
   result <- lapply(
     maps$map_id,
     function(i) {
-        r <- st_read(con, query=paste0(
+        r <- query_db(con, paste0(
             "SELECT ",
-            "  pol.pol_id, name AS pol_name, lang, ",
-            "  ST_AsBinary(geometry) AS geometry ",
+            "  pol.pol_id, name AS pol_name, lang, geometry ",
             "FROM polygons pol ",
             "  JOIN map_pol ON pol.pol_id = map_pol.pol_id ",
             "WHERE map_pol.map_id = ", i, " AND geometry IS NOT NULL;"))
+        r <- st_sf(r[c('pol_id', 'pol_name', 'lang')],
+                   geometry=parse_geometry(r$geometry))
         st_crs(r) <- 'urn:ogc:def:crs:EPSG::3067'
         r <- st_make_valid(r)
         r[!st_is_empty(r),]
