@@ -5,10 +5,10 @@ connect_to_db <- function() {
   con <- dbConnect(MariaDB(),
                    host=Sys.getenv('DB_HOST'),
                    port=as.integer(Sys.getenv('DB_PORT')),
-                   user=Sys.getenv('DB_USER'),
+                   username=Sys.getenv('DB_USER'),
                    password=Sys.getenv('DB_PASS'),
                    dbname=Sys.getenv('DB_NAME'),
-                   bigint='integer')
+                   bigint='integer64')
   dbExecute(con, 'SET NAMES utf8;')
   con
 }
