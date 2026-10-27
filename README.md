@@ -6,6 +6,41 @@ Web application. Currently the app supports mainly maps and treemap
 type index visualizations, with some other types (barplots, timelines,
 word clouds) being in early stages of development.
 
+## Branch `dhh26-regi-parquet`: reading parquet files with DuckDB
+
+This branch reads the data from parquet files with
+[DuckDB](https://duckdb.org/) instead of querying MariaDB, and adds the
+Livonian collection (`vldl`). It is deployed together with the
+`dhh26-regi-parquet` branch of
+[runoregi](https://github.com/jakobytes/runoregi), which also holds the
+Rahti manifests and a `docker-compose.yml` for running both locally.
+
+Changes:
+- `R/data.R`: one DuckDB connection per R process with a view per parquet
+  file (RMariaDB removed); `x REGEXP 'y'` becomes `regexp_matches(x, 'y')`;
+  BIGINT results as R numbers; logging to the database is off.
+- `R/server.R`: double quotes in parameter values (e.g. type IDs in links
+  from runoregi) become single quotes in SQL queries; the visualization
+  updates automatically (debounced) when parameters change, so there is
+  no Refresh button.
+- `R/visualizations/map.R`: polygons are decoded in R from the geometry
+  blob (MySQL internal format: 4-byte SRID + WKB) instead of `ST_AsBinary`.
+- `config.yaml`: SQL string literals in single quotes; complete `GROUP BY`
+  lists; the verse- and poem-cluster type trees resolve the cluster first
+  in a `MATERIALIZED` CTE (otherwise DuckDB picks a join order that takes
+  minutes).
+- `tests/smoke_test.R`: runs all SQL visualizations and renders a map and a
+  type tree without a browser.
+- `Dockerfile`: installs a current DuckDB for R with the httpfs extension.
+
+| Variable | Description |
+|---|---|
+| `PARQUET_BASE` | URL or directory containing `<table>.parquet` |
+| `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Cap DuckDB below the container limits |
+
+The image is built for `linux/amd64` (Rahti's architecture), so on Apple
+silicon it runs under emulation.
+
 ## Running or deploying
 
 For quick testing, the application can be started from the R console
