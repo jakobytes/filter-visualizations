@@ -6,12 +6,12 @@ Web application. Currently the app supports mainly maps and treemap
 type index visualizations, with some other types (barplots, timelines,
 word clouds) being in early stages of development.
 
-## Branch `dhh26-regi-parquet`: reading parquet files with DuckDB
+## Branch `filter-visualizations-parquet`: reading parquet files with DuckDB
 
 This branch reads the data from parquet files with
 [DuckDB](https://duckdb.org/) instead of querying MariaDB, and adds the
 Livonian collection (`vldl`). It is deployed together with the
-`dhh26-regi-parquet` branch of
+`runoregi-parquet` branch of
 [runoregi](https://github.com/jakobytes/runoregi), which also holds the
 Rahti manifests and a `docker-compose.yml` for running both locally.
 
