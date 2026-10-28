@@ -32,8 +32,8 @@ visualizations:
       - name: collection
         description: 'Collection'
         widget: checkboxGroupInput
-        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', literary: '"literary"' }
-        default: ['"skvr"', '"erab"', '"jr"']
+        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', vldl: '"vldl"', literary: '"literary"' }
+        default: ['"skvr"', '"erab"', '"jr"', '"vldl"']
         inline: true
   map_nverses:
     type: map
@@ -51,8 +51,8 @@ visualizations:
       - name: collection
         description: 'Collection'
         widget: checkboxGroupInput
-        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', literary: '"literary"' }
-        default: ['"skvr"', '"erab"', '"jr"']
+        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', vldl: '"vldl"', literary: '"literary"' }
+        default: ['"skvr"', '"erab"', '"jr"', '"vldl"']
         inline: true
   map_nwords:
     type: map
@@ -70,8 +70,8 @@ visualizations:
       - name: collection
         description: 'Collection'
         widget: checkboxGroupInput
-        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', literary: '"literary"' }
-        default: ['"skvr"', '"erab"', '"jr"']
+        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', vldl: '"vldl"', literary: '"literary"' }
+        default: ['"skvr"', '"erab"', '"jr"', '"vldl"']
         inline: true
   map_ntypes:
     type: map
@@ -191,8 +191,8 @@ visualizations:
       - name: collection
         description: 'Collection'
         widget: checkboxGroupInput
-        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', literary: '"literary"' }
-        default: ['"skvr"', '"erab"', '"jr"']
+        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', vldl: '"vldl"', literary: '"literary"' }
+        default: ['"skvr"', '"erab"', '"jr"', '"vldl"']
         inline: true
       - name: min_sim
         description: 'min. similarity'
@@ -240,8 +240,8 @@ visualizations:
       - name: collection
         description: 'Collection'
         widget: checkboxGroupInput
-        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', literary: '"literary"' }
-        default: ['"skvr"', '"erab"', '"jr"']
+        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', vldl: '"vldl"', literary: '"literary"' }
+        default: ['"skvr"', '"erab"', '"jr"', '"vldl"']
         inline: true
   map_time_int:
     type: map
@@ -270,8 +270,8 @@ visualizations:
       - name: collection
         description: 'Collection'
         widget: checkboxGroupInput
-        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', literary: '"literary"' }
-        default: ['"skvr"', '"erab"', '"jr"']
+        choices: { skvr: '"skvr"', erab: '"erab"', jr: '"jr"', vldl: '"vldl"', literary: '"literary"' }
+        default: ['"skvr"', '"erab"', '"jr"', '"vldl"']
         inline: true
   map_word:
     type: map
